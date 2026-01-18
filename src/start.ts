@@ -9,8 +9,8 @@ const start = async () => {
 
   // Debug: Log environment variables
   console.log('NODE_ENV:', process.env.NODE_ENV)
-  console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set')
-  console.log('TEST_MONGODB_URI:', process.env.TEST_MONGODB_URI ? 'Set' : 'Not set')
+  console.log('MONGODB_URI:', process.env.MONGODB_URI !== undefined ? 'Set' : 'Not set')
+  console.log('TEST_MONGODB_URI:', process.env.TEST_MONGODB_URI !== undefined ? 'Set' : 'Not set')
 
   // Connect to MongoDB Atlas
   await databaseService.connect()

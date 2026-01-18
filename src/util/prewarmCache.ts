@@ -39,7 +39,7 @@ const prewarmCache = async () => {
   ]
   
   for (const element of toPrewarm) {
-    if (redisClient) {
+    if (redisClient !== null) {
       try {
         const data = await element.Schema.find()
           .select({ index: 1, level: 1, name: 1, url: 1, _id: 0 })
