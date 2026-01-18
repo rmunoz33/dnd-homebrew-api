@@ -123,6 +123,12 @@ export class MongoController {
     try {
       const { index } = req.params
 
+      // Ensure index is a string
+      if (typeof index !== 'string') {
+        res.status(400).json({ error: 'Invalid index parameter' })
+        return
+      }
+
       // Check if collection exists
       const exists = await databaseService.collectionExists(collectionName)
       if (!exists) {
