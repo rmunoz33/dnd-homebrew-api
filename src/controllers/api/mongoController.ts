@@ -1,18 +1,13 @@
 import { NextFunction, Request, Response } from 'express'
 import mongoose from 'mongoose'
 
-import { escapeRegExp, redisClient, ResourceList } from '@/util'
+import { escapeRegExp, redisClient } from '@/util'
 import { databaseService } from '@/util/databaseService'
 
 interface SearchQuery {
   [key: string]: any
 }
 
-interface PaginationOptions {
-  page: number
-  limit: number
-  skip: number
-}
 
 /**
  * Generic controller for MongoDB Atlas collections
@@ -52,9 +47,9 @@ export class MongoController {
       // Build search query
       const searchQuery: SearchQuery = {}
 
-      if (search) {
+      if (typeof search === 'string' && search !== '') {
         // Search in name field (case-insensitive)
-        searchQuery.name = { $regex: new RegExp(escapeRegExp(search as string), 'i') }
+        searchQuery.name = { $regex: new RegExp(escapeRegExp(search), 'i') }
       }
 
       // Add other filters
@@ -92,14 +87,14 @@ export class MongoController {
         page: pageNum,
         total_pages: totalPages,
         results: data.map((item) => ({
-          index: item.index || item._id,
+          index: item.index ?? item._id,
           name: item.name,
-          url: item.url || `/api/${collectionName}/${item.index || item._id}`
+          url: item.url ?? `/api/${collectionName}/${item.index ?? item._id}`
         }))
       }
 
       // Cache the response (optional)
-      if (redisClient) {
+      if (redisClient !== null) {
         try {
           const redisKey = req.originalUrl
           await redisClient.setEx(redisKey, 300, JSON.stringify(response)) // 5 minutes
@@ -136,7 +131,7 @@ export class MongoController {
       }
 
       const db = mongoose.connection.db
-      if (!db) {
+      if (db === undefined) {
         res.status(500).json({ error: 'Database connection not available' })
         return
       }
@@ -145,14 +140,14 @@ export class MongoController {
       // Try to find by index first, then by _id
       let item = await collection.findOne({ index })
 
-      if (!item) {
+      if (item === null) {
         // Try to find by _id if it's a valid ObjectId
         if (mongoose.Types.ObjectId.isValid(index)) {
           item = await collection.findOne({ _id: new mongoose.Types.ObjectId(index) })
         }
       }
 
-      if (!item) {
+      if (item === null) {
         res
           .status(404)
           .json({ error: `Item with index '${index}' not found in collection '${collectionName}'` })
@@ -160,7 +155,7 @@ export class MongoController {
       }
 
       // Cache the response (optional)
-      if (redisClient) {
+      if (redisClient !== null) {
         try {
           const redisKey = req.originalUrl
           await redisClient.setEx(redisKey, 600, JSON.stringify(item)) // 10 minutes
@@ -184,13 +179,13 @@ export class MongoController {
     try {
       const { q: query, collections, version = '2014' } = req.query
 
-      if (!query) {
+      if (typeof query !== 'string' || query === '') {
         res.status(400).json({ error: 'Search query parameter "q" is required' })
         return
       }
 
       const db = mongoose.connection.db
-      if (!db) {
+      if (db === undefined) {
         res.status(500).json({ error: 'Database connection not available' })
         return
       }
@@ -199,7 +194,7 @@ export class MongoController {
       // Determine which collections to search
       let collectionsToSearch: string[] = []
 
-      if (collections) {
+      if (collections !== undefined) {
         // Search specific collections
         const collectionList = Array.isArray(collections) ? collections : [collections]
         collectionsToSearch = collectionList.map((col) => `${version}-${col}`)
@@ -223,7 +218,7 @@ export class MongoController {
           results.forEach((item) => {
             searchResults.push({
               ...item,
-              collection: collectionName.replace(`${version}-`, ''),
+              collection: collectionName.replace(`${version as string}-`, ''),
               version
             })
           })
@@ -234,8 +229,8 @@ export class MongoController {
 
       // Sort results by relevance (exact matches first)
       searchResults.sort((a, b) => {
-        const aExact = a.name.toLowerCase() === (query as string).toLowerCase()
-        const bExact = b.name.toLowerCase() === (query as string).toLowerCase()
+        const aExact = a.name.toLowerCase() === query.toLowerCase()
+        const bExact = b.name.toLowerCase() === query.toLowerCase()
 
         if (aExact && !bExact) return -1
         if (!aExact && bExact) return 1
@@ -243,7 +238,7 @@ export class MongoController {
       })
 
       const response = {
-        query: query as string,
+        query,
         count: searchResults.length,
         results: searchResults.slice(0, 50) // Limit to 50 results
       }

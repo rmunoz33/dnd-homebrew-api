@@ -12,7 +12,7 @@ export class DatabaseService {
   private constructor() {}
 
   public static getInstance(): DatabaseService {
-    if (!DatabaseService.instance) {
+    if (DatabaseService.instance === undefined) {
       DatabaseService.instance = new DatabaseService()
     }
     return DatabaseService.instance

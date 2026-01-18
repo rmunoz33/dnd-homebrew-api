@@ -32,7 +32,7 @@ export const healthCheck = async (req: Request, res: Response): Promise<void> =>
         used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
         total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
       },
-      version: process.env.npm_package_version || 'unknown'
+      version: process.env.npm_package_version ?? 'unknown'
     }
 
     const statusCode = dbStatus ? 200 : 503
@@ -102,7 +102,7 @@ export const detailedHealthCheck = async (req: Request, res: Response): Promise<
         total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
         external: Math.round(process.memoryUsage().external / 1024 / 1024)
       },
-      version: process.env.npm_package_version || 'unknown'
+      version: process.env.npm_package_version ?? 'unknown'
     }
 
     res.status(200).json(health)

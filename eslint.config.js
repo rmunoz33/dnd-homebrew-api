@@ -9,7 +9,7 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
   {
     name: 'base-ignore',
-    ignores: ['**/coverage/**', '**/dist/**', '**/node_modules/**']
+    ignores: ['**/coverage/**', '**/dist/**', '**/node_modules/**', 'fix-imports.js']
   },
   eslint.configs.recommended,
   // Main TypeScript and JS linting configuration
